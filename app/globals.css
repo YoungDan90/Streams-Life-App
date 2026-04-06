@@ -1,27 +1,103 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --navy: #0D1B2A;
+  --gold: #C9A84C;
+  --gold-light: #D4B86A;
+  --cream: #F8F7F4;
+  --background: #F8F7F4;
+  --foreground: #0D1B2A;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  font-size: 16px;
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Inter', sans-serif;
+  min-height: 100dvh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overscroll-behavior-y: none;
+}
+
+/* Safe area insets for notched phones */
+.safe-top { padding-top: env(safe-area-inset-top); }
+.safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+.pb-safe { padding-bottom: max(1rem, env(safe-area-inset-bottom)); }
+
+/* Scrollbar hiding */
+.hide-scrollbar::-webkit-scrollbar { display: none; }
+.hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Dark mode */
+.dark {
+  --background: #0D1B2A;
+  --foreground: #F8F7F4;
 }
 
 @layer utilities {
-  .text-balance {
-    text-wrap: balance;
+  .text-balance { text-wrap: balance; }
+
+  .font-heading { font-family: 'Playfair Display', serif; }
+
+  .btn-primary {
+    @apply bg-navy text-gold font-semibold px-6 py-3 rounded-xl transition-all duration-200 active:scale-95 hover:bg-navy-50;
   }
+
+  .btn-secondary {
+    @apply bg-transparent text-navy border-2 border-navy font-semibold px-6 py-3 rounded-xl transition-all duration-200 active:scale-95;
+  }
+
+  .btn-gold {
+    @apply bg-gold text-navy font-semibold px-6 py-3 rounded-xl transition-all duration-200 active:scale-95 hover:bg-gold-light;
+  }
+
+  .card {
+    @apply bg-white rounded-card shadow-card p-4;
+  }
+
+  .card-dark {
+    @apply bg-navy-50 rounded-card shadow-card p-4;
+  }
+}
+
+/* Timer pulse animation */
+@keyframes timer-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.timer-pulse {
+  animation: timer-pulse 2s ease-in-out infinite;
+}
+
+/* Smooth page transitions */
+.page-enter {
+  animation: slideUp 0.35s ease-out;
+}
+
+/* PWA standalone mode adjustments */
+@media (display-mode: standalone) {
+  body {
+    padding-top: env(safe-area-inset-top);
+  }
+}
+
+/* Input reset for mobile */
+input, textarea, select {
+  font-family: 'Inter', sans-serif;
+  font-size: 16px; /* Prevents iOS zoom on focus */
 }

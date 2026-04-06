@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx create-next-app@14 . --typescript --tailwind --eslint --app --src-dir=false --import-alias=\"@/*\" --yes)",
+      "Bash(npx create-next-app@14 streams-life-temp --typescript --tailwind --eslint --app --no-src-dir --import-alias=\"@/*\")",
+      "Bash(npm install:*)",
+      "Bash(node scripts/generate-icons.js)",
+      "Bash(npx tsc:*)",
+      "Bash(npm run:*)",
+      "WebFetch(domain:streams-life-app-xynp.vercel.app)"
+    ]
+  }
+}
