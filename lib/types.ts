@@ -4,6 +4,12 @@ export interface Profile {
   big_why: string | null
   notification_time: string | null
   onboarding_complete: boolean
+  subscription_plan: 'free' | 'pro'
+  notify_checkin: boolean
+  notify_weekly: boolean
+  notify_goals: boolean
+  appearance_mode: 'light' | 'dark'
+  text_size: 'small' | 'medium' | 'large'
   created_at: string
 }
 
