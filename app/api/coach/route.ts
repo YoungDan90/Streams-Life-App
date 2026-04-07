@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
         .order('date', { ascending: false }),
       supabase
         .from('goals')
-        .select('title, progress, target_date')
+        .select('title, progress, target_date, life_areas(name)')
         .eq('user_id', user.id)
         .lt('progress', 100),
       supabase
@@ -56,15 +56,17 @@ export async function POST(req: NextRequest) {
       return `${c.date}: avg score ${avgScore.toFixed(1)}/5. Focus: "${c.focus_text || 'none'}"`
     }).join('\n')
 
-    const goalsSummary = goals.map((g: { title: string; progress: number; target_date: string }) =>
-      `- ${g.title} (${g.progress}% complete, due ${g.target_date})`
-    ).join('\n')
+    const goalsSummary = goals.map((g: { title: string; progress: number; target_date: string; life_areas?: { name: string } | { name: string }[] }) => {
+      const areaObj = Array.isArray(g.life_areas) ? g.life_areas[0] : g.life_areas
+      const area = areaObj?.name ? `[${areaObj.name}] ` : ''
+      return `- ${area}${g.title} (${g.progress}% complete, target: ${g.target_date})`
+    }).join('\n')
 
     const focusSummary = sessions.length
       ? `Total focus sessions this week: ${sessions.length}, ${sessions.reduce((sum: number, s: { duration_minutes: number }) => sum + s.duration_minutes, 0)} minutes`
       : 'No focus sessions this week.'
 
-    const systemPrompt = `You are Sage, a warm, direct, and structured personal life coach. You work exclusively for ${profile?.first_name || 'this person'}.
+    const systemPrompt = `You are Liv, a warm, direct, and structured personal life coach. You work exclusively for ${profile?.first_name || 'this person'}.
 
 USER PROFILE:
 - Name: ${profile?.first_name || 'the user'}
@@ -74,8 +76,8 @@ USER PROFILE:
 RECENT CHECK-IN SCORES (last 7 days):
 ${checkInSummary || 'No check-ins in the last 7 days.'}
 
-ACTIVE GOALS:
-${goalsSummary || 'No active goals set.'}
+GOALS (set during onboarding and via the Planner — these are the user's stated intentions, not just tasks):
+${goalsSummary || 'No goals set yet.'}
 
 FOCUS SESSIONS:
 ${focusSummary}

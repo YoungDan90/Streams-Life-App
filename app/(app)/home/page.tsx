@@ -3,7 +3,7 @@ import { getGreeting, formatDate, calculateStreak, averageScores, getTodayStr } 
 import Link from 'next/link'
 import ProgressRing from '@/components/ui/ProgressRing'
 import ScoreBar from '@/components/ui/ScoreBar'
-import { Zap, TrendingUp, ChevronRight, Flame } from 'lucide-react'
+import { Zap, TrendingUp, ChevronRight, Flame, Sparkles, CalendarDays } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
@@ -181,19 +181,49 @@ export default async function HomePage() {
         <p className="text-white/80 text-sm leading-relaxed italic">{insight}</p>
       </div>
 
-      {/* Lock In shortcut */}
-      <Link href="/lockin">
-        <div className="bg-gold rounded-card p-4 flex items-center justify-between shadow-gold active:scale-95 transition-all">
-          <div className="flex items-center gap-3">
-            <Zap size={22} className="text-navy" />
-            <div>
-              <p className="text-navy font-semibold">Lock In</p>
-              <p className="text-navy/60 text-xs">Start a focus session</p>
+      {/* Bottom shortcuts */}
+      <div className="grid grid-cols-2 gap-3">
+        <Link href="/lockin">
+          <div className="bg-gold rounded-card p-4 flex items-center justify-between shadow-gold active:scale-95 transition-all">
+            <div className="flex items-center gap-2">
+              <Zap size={20} className="text-navy" />
+              <div>
+                <p className="text-navy font-semibold text-sm">Lock In</p>
+                <p className="text-navy/60 text-xs">Focus session</p>
+              </div>
             </div>
+            <ChevronRight size={16} className="text-navy/60" />
           </div>
-          <ChevronRight size={20} className="text-navy/60" />
-        </div>
-      </Link>
+        </Link>
+
+        <Link href="/vision-board">
+          <div className="bg-navy border border-gold/20 rounded-card p-4 flex items-center justify-between active:scale-95 transition-all shadow-card">
+            <div className="flex items-center gap-2">
+              <Sparkles size={20} className="text-gold" />
+              <div>
+                <p className="text-white font-semibold text-sm">Vision Board</p>
+                <p className="text-white/40 text-xs">Your future</p>
+              </div>
+            </div>
+            <ChevronRight size={16} className="text-white/30" />
+          </div>
+        </Link>
+
+        <Link href="/calendar" className="col-span-2">
+          <div className="bg-white border border-navy/8 rounded-card p-4 flex items-center justify-between active:scale-95 transition-all shadow-card">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 bg-navy/5 rounded-xl flex items-center justify-center">
+                <CalendarDays size={18} className="text-navy" />
+              </div>
+              <div>
+                <p className="text-navy font-semibold text-sm">Activity Calendar</p>
+                <p className="text-navy/50 text-xs">See your check-ins, focus & goals</p>
+              </div>
+            </div>
+            <ChevronRight size={16} className="text-navy/30" />
+          </div>
+        </Link>
+      </div>
     </div>
   )
 }

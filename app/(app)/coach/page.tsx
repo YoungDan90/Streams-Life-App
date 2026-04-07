@@ -166,12 +166,12 @@ export default function CoachPage() {
       <div className="bg-cream border-b border-navy/8 px-5 pt-12 pb-3 safe-top">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            {/* Sage Avatar */}
+            {/* Liv Avatar */}
             <div className="w-10 h-10 bg-navy rounded-full flex items-center justify-center shadow-sm">
-              <span className="text-gold font-heading font-bold text-lg">S</span>
+              <span className="text-gold font-heading font-bold text-lg">L</span>
             </div>
             <div>
-              <h1 className="font-heading text-lg font-bold text-navy">Sage</h1>
+              <h1 className="font-heading text-lg font-bold text-navy">Liv</h1>
               <p className="text-navy/40 text-xs">Your AI life coach</p>
             </div>
           </div>
@@ -226,10 +226,10 @@ export default function CoachPage() {
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center animate-fade-in">
             <div className="w-16 h-16 bg-navy rounded-full flex items-center justify-center mb-4 shadow-card">
-              <span className="text-gold font-heading font-bold text-2xl">S</span>
+              <span className="text-gold font-heading font-bold text-2xl">L</span>
             </div>
             <h2 className="font-heading text-xl font-bold text-navy mb-2">
-              Hello, I&apos;m Sage.
+              Hello, I&apos;m Liv.
             </h2>
             <p className="text-navy/50 text-sm mb-8 max-w-xs">
               Your personal life coach. I know your goals, your check-ins, and your why. What&apos;s on your mind?
@@ -254,7 +254,7 @@ export default function CoachPage() {
             >
               {msg.role === 'assistant' && (
                 <div className="w-8 h-8 bg-navy rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                  <span className="text-gold font-heading font-bold text-sm">S</span>
+                  <span className="text-gold font-heading font-bold text-sm">L</span>
                 </div>
               )}
               <div
@@ -273,7 +273,7 @@ export default function CoachPage() {
         {loading && (
           <div className="flex gap-3 animate-fade-in">
             <div className="w-8 h-8 bg-navy rounded-full flex items-center justify-center flex-shrink-0">
-              <span className="text-gold font-heading font-bold text-sm">S</span>
+              <span className="text-gold font-heading font-bold text-sm">L</span>
             </div>
             <div className="bg-white px-4 py-3 rounded-2xl rounded-tl-sm shadow-card border border-navy/6">
               <div className="flex gap-1.5 items-center">
@@ -296,7 +296,7 @@ export default function CoachPage() {
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Message Sage…"
+            placeholder="Message Liv…"
             rows={1}
             className="flex-1 border border-navy/15 text-navy rounded-xl px-4 py-3 focus:outline-none focus:border-gold transition-colors placeholder:text-navy/30 resize-none text-sm leading-relaxed max-h-32"
             style={{ overflowY: input.includes('\n') ? 'auto' : 'hidden' }}

@@ -184,6 +184,27 @@ CREATE TRIGGER on_auth_user_created
   FOR EACH ROW EXECUTE FUNCTION handle_new_user();
 
 -- ============================================================
+-- VISION BOARD ITEMS
+-- ============================================================
+CREATE TABLE IF NOT EXISTS vision_board_items (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  type TEXT NOT NULL CHECK (type IN ('image', 'quote', 'goal')),
+  content TEXT,
+  image_url TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE vision_board_items ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can manage own vision board items"
+  ON vision_board_items FOR ALL
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE INDEX IF NOT EXISTS vision_board_user_idx ON vision_board_items(user_id, created_at DESC);
+
+-- ============================================================
 -- DATA RETENTION (optional scheduled job via pg_cron)
 -- ============================================================
 -- To enable 12-month checkin retention and 30-day conversation

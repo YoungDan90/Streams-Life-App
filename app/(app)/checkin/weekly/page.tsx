@@ -209,7 +209,7 @@ export default function WeeklyReviewPage() {
       {/* AI Summary */}
       <div className="bg-navy rounded-card p-5 mb-5 shadow-card">
         <p className="text-gold text-xs font-medium uppercase tracking-wide mb-3">
-          Sage&apos;s Weekly Summary
+          Liv&apos;s Weekly Summary
         </p>
         {summaryLoading ? (
           <div className="flex items-center gap-2">

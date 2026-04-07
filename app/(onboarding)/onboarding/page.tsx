@@ -5,7 +5,22 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { DEFAULT_LIFE_AREAS } from '@/lib/types'
 
-type Step = 1 | 2 | 3 | 4 | 5 | 6
+type Step = 1 | 2 | 3 | 4 | 5 | 6 | 7
+
+const GOAL_PLACEHOLDERS: Record<string, string> = {
+  'Health & Fitness':        'e.g. Lose 8 pounds by summer',
+  'Family & Relationships':  'e.g. Have a weekly family dinner',
+  'Faith & Spirituality':    'e.g. Meditate for 10 minutes every morning',
+  'Finance & Wealth':        'e.g. Save £500 per month',
+  'Career & Business':       'e.g. Launch my side project',
+  'Personal Growth':         'e.g. Read 12 books this year',
+  'Social Life':             'e.g. See friends at least once a week',
+  'Rest & Recreation':       'e.g. Take one full day off each week',
+}
+
+function getPlaceholder(area: string): string {
+  return GOAL_PLACEHOLDERS[area] || 'e.g. Set a meaningful goal for this area'
+}
 
 export default function OnboardingPage() {
   const router = useRouter()
@@ -13,13 +28,15 @@ export default function OnboardingPage() {
   const [firstName, setFirstName] = useState('')
   const [selectedAreas, setSelectedAreas] = useState<string[]>([])
   const [customAreas, setCustomAreas] = useState<string[]>(['', ''])
+  const [areaGoals, setAreaGoals] = useState<Record<string, string>>({})
   const [bigWhy, setBigWhy] = useState('')
   const [notifyEnabled, setNotifyEnabled] = useState(false)
   const [notifyTime, setNotifyTime] = useState('08:00')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
-  const progress = (step / 6) * 100
+  const TOTAL_STEPS = 7
+  const progress = (step / TOTAL_STEPS) * 100
 
   function toggleArea(area: string) {
     setSelectedAreas(prev =>
@@ -35,11 +52,22 @@ export default function OnboardingPage() {
     })
   }
 
-  function getAllAreas() {
+  function getAllAreas(): string[] {
     return [
       ...selectedAreas,
       ...customAreas.filter(a => a.trim().length > 0),
     ]
+  }
+
+  function setGoalForArea(area: string, value: string) {
+    setAreaGoals(prev => ({ ...prev, [area]: value }))
+  }
+
+  function canProceed(): boolean {
+    if (step === 2) return firstName.trim().length > 0
+    if (step === 3) return getAllAreas().length >= 3
+    if (step === 5) return bigWhy.trim().length > 10
+    return true
   }
 
   async function handleFinish() {
@@ -71,24 +99,47 @@ export default function OnboardingPage() {
       return
     }
 
-    // Save life areas
-    const areaRows = areas.map(name => ({
-      user_id: user.id,
-      name,
-      is_custom: !DEFAULT_LIFE_AREAS.includes(name),
-    }))
+    // Save life areas — get IDs back so we can link goals
+    const { data: insertedAreas, error: areasError } = await supabase
+      .from('life_areas')
+      .insert(
+        areas.map(name => ({
+          user_id: user.id,
+          name,
+          is_custom: !DEFAULT_LIFE_AREAS.includes(name),
+        }))
+      )
+      .select('id, name')
 
-    await supabase.from('life_areas').insert(areaRows)
+    if (areasError) {
+      setError('Failed to save life areas. Please try again.')
+      setSaving(false)
+      return
+    }
+
+    // Save goals for areas that have a goal entered
+    const ninetyDaysOut = new Date()
+    ninetyDaysOut.setDate(ninetyDaysOut.getDate() + 90)
+    const targetDate = ninetyDaysOut.toISOString().split('T')[0]
+
+    const goalRows = (insertedAreas || [])
+      .filter(area => areaGoals[area.name]?.trim())
+      .map(area => ({
+        user_id: user.id,
+        life_area_id: area.id,
+        title: areaGoals[area.name].trim(),
+        target_date: targetDate,
+        progress: 0,
+      }))
+
+    if (goalRows.length > 0) {
+      await supabase.from('goals').insert(goalRows)
+    }
 
     router.push('/home')
   }
 
-  function canProceed(): boolean {
-    if (step === 2) return firstName.trim().length > 0
-    if (step === 3) return getAllAreas().length >= 3
-    if (step === 4) return bigWhy.trim().length > 10
-    return true
-  }
+  const goalsEntered = Object.values(areaGoals).filter(v => v.trim()).length
 
   return (
     <div className="flex flex-col min-h-dvh">
@@ -101,11 +152,12 @@ export default function OnboardingPage() {
               style={{ width: `${progress}%` }}
             />
           </div>
-          <p className="text-white/40 text-xs mt-2 text-right">Step {step} of 6</p>
+          <p className="text-white/40 text-xs mt-2 text-right">Step {step} of {TOTAL_STEPS}</p>
         </div>
       )}
 
       <div className="flex-1 flex flex-col px-6 pt-8 pb-10 animate-slide-up">
+
         {/* Step 1: Welcome */}
         {step === 1 && (
           <div className="flex flex-col items-center justify-center flex-1 text-center">
@@ -213,8 +265,50 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {/* Step 4: Big Why */}
+        {/* Step 4: Goals per life area (NEW) */}
         {step === 4 && (
+          <div className="flex flex-col flex-1">
+            <h2 className="font-heading text-3xl font-bold text-white mb-2">
+              Set your goals
+            </h2>
+            <p className="text-white/50 text-sm mb-6">
+              What do you want to achieve in each area? Even one sentence is enough — Liv will help you build a plan.
+            </p>
+
+            <div className="space-y-4 flex-1 overflow-y-auto hide-scrollbar pb-4">
+              {getAllAreas().map(area => (
+                <div key={area}>
+                  <label className="block text-gold/80 text-xs font-semibold uppercase tracking-wide mb-2">
+                    {area}
+                  </label>
+                  <input
+                    type="text"
+                    value={areaGoals[area] || ''}
+                    onChange={e => setGoalForArea(area, e.target.value)}
+                    placeholder={getPlaceholder(area)}
+                    className="w-full bg-navy-50 border border-gold/20 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-gold transition-colors placeholder:text-white/25 text-sm"
+                  />
+                </div>
+              ))}
+            </div>
+
+            <p className="text-white/30 text-xs mt-4 mb-4">
+              {goalsEntered > 0
+                ? `${goalsEntered} of ${getAllAreas().length} goals set — you can always add more later.`
+                : 'Skip any area you&apos;re not ready to set a goal for yet.'}
+            </p>
+
+            <button
+              onClick={() => setStep(5)}
+              className="w-full bg-gold text-navy font-semibold py-4 rounded-xl text-lg active:scale-95 transition-all"
+            >
+              Continue →
+            </button>
+          </div>
+        )}
+
+        {/* Step 5: Big Why (was step 4) */}
+        {step === 5 && (
           <div className="flex flex-col flex-1">
             <h2 className="font-heading text-3xl font-bold text-white mb-2">
               Your big why
@@ -231,11 +325,11 @@ export default function OnboardingPage() {
               className="w-full bg-navy-50 border border-gold/20 text-white rounded-xl px-4 py-4 focus:outline-none focus:border-gold transition-colors placeholder:text-white/30 resize-none text-sm leading-relaxed"
             />
             <p className="text-white/30 text-xs mt-2">
-              This is private and helps Sage give you more personal coaching.
+              This is private and helps Liv give you more personal coaching.
             </p>
             <div className="flex-1" />
             <button
-              onClick={() => setStep(5)}
+              onClick={() => setStep(6)}
               disabled={!canProceed()}
               className="w-full bg-gold text-navy font-semibold py-4 rounded-xl text-lg active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
             >
@@ -244,8 +338,8 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {/* Step 5: Notifications */}
-        {step === 5 && (
+        {/* Step 6: Notifications (was step 5) */}
+        {step === 6 && (
           <div className="flex flex-col flex-1">
             <h2 className="font-heading text-3xl font-bold text-white mb-2">
               Daily reminder
@@ -304,7 +398,7 @@ export default function OnboardingPage() {
 
             <div className="flex-1" />
             <button
-              onClick={() => setStep(6)}
+              onClick={() => setStep(7)}
               className="w-full bg-gold text-navy font-semibold py-4 rounded-xl text-lg active:scale-95 transition-all"
             >
               Continue →
@@ -312,20 +406,20 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {/* Step 6: Ready */}
-        {step === 6 && (
+        {/* Step 7: Ready (was step 6) */}
+        {step === 7 && (
           <div className="flex flex-col flex-1">
             <h2 className="font-heading text-3xl font-bold text-white mb-2">
               You&apos;re ready, {firstName} 🌟
             </h2>
-            <p className="text-white/50 text-sm mb-8">
+            <p className="text-white/50 text-sm mb-6">
               Here&apos;s what you&apos;ve set up for yourself.
             </p>
 
-            <div className="space-y-4 mb-8">
+            <div className="space-y-4 mb-6 overflow-y-auto hide-scrollbar flex-1">
               <div className="bg-white/5 rounded-xl p-4 border border-white/10">
-                <p className="text-gold text-xs font-medium mb-1 uppercase tracking-wide">Your life areas</p>
-                <div className="flex flex-wrap gap-2 mt-2">
+                <p className="text-gold text-xs font-medium mb-2 uppercase tracking-wide">Your life areas</p>
+                <div className="flex flex-wrap gap-2">
                   {getAllAreas().map(area => (
                     <span key={area} className="bg-gold/10 text-gold text-xs px-3 py-1 rounded-full border border-gold/20">
                       {area}
@@ -333,6 +427,22 @@ export default function OnboardingPage() {
                   ))}
                 </div>
               </div>
+
+              {goalsEntered > 0 && (
+                <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+                  <p className="text-gold text-xs font-medium mb-3 uppercase tracking-wide">Your goals</p>
+                  <div className="space-y-2">
+                    {getAllAreas()
+                      .filter(area => areaGoals[area]?.trim())
+                      .map(area => (
+                        <div key={area}>
+                          <p className="text-white/40 text-xs">{area}</p>
+                          <p className="text-white/80 text-sm">{areaGoals[area]}</p>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              )}
 
               <div className="bg-white/5 rounded-xl p-4 border border-white/10">
                 <p className="text-gold text-xs font-medium mb-1 uppercase tracking-wide">Your why</p>
@@ -347,8 +457,8 @@ export default function OnboardingPage() {
               )}
             </div>
 
-            <p className="text-white/40 text-sm text-center mb-6">
-              Your AI coach Sage will use all of this to guide you. Let&apos;s build a life you&apos;re proud of.
+            <p className="text-white/40 text-sm text-center mb-4">
+              Your AI coach Liv will use all of this to guide you. Let&apos;s build a life you&apos;re proud of.
             </p>
 
             {error && (

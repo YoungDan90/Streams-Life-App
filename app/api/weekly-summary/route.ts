@@ -65,7 +65,7 @@ export async function POST() {
       .map((c: { date: string; focus_text?: string }) => `${c.date}: "${c.focus_text}"`)
       .join('\n')
 
-    const prompt = `You are Sage, a personal life coach. Write a concise weekly review summary for ${profile?.first_name || 'the user'}.
+    const prompt = `You are Liv, a personal life coach. Write a concise weekly review summary for ${profile?.first_name || 'the user'}.
 
 USER CONTEXT:
 - Big Why: "${profile?.big_why || 'Not set'}"
