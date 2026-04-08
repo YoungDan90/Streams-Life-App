@@ -357,17 +357,20 @@ export default function SettingsPage() {
         </div>
         <div className="flex items-center gap-2">
           {value && <span className="text-navy/40 text-sm">{value}</span>}
-          {onPress && <ChevronRight size={15} className={destructive ? 'text-red-300' : 'text-navy/25'} />}
+          {onPress && <ChevronRight size={15} className={destructive ? 'text-red-300' : 'text-navy/50'} />}
         </div>
       </button>
     )
   }
 
-  function Toggle({ on, onChange }: { on: boolean; onChange: (v: boolean) => void }) {
+  function Toggle({ on, onChange, label }: { on: boolean; onChange: (v: boolean) => void; label?: string }) {
     return (
       <button
+        role="switch"
+        aria-checked={on}
+        aria-label={label}
         onClick={() => onChange(!on)}
-        className={`relative w-11 h-6 rounded-full transition-colors ${on ? 'bg-gold' : 'bg-navy/15'}`}
+        className={`relative w-11 h-6 rounded-full transition-colors ${on ? 'bg-gold' : 'bg-navy/30'}`}
       >
         <span
           className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${
@@ -385,9 +388,9 @@ export default function SettingsPage() {
       <div className="flex items-center justify-between px-4 py-3.5">
         <div>
           <p className="text-navy text-sm font-medium">{label}</p>
-          {sublabel && <p className="text-navy/40 text-xs mt-0.5">{sublabel}</p>}
+          {sublabel && <p className="text-navy/50 text-xs mt-0.5">{sublabel}</p>}
         </div>
-        <Toggle on={on} onChange={onChange} />
+        <Toggle on={on} onChange={onChange} label={label} />
       </div>
     )
   }
@@ -402,8 +405,8 @@ export default function SettingsPage() {
         <div className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-50 bg-white rounded-3xl shadow-2xl overflow-hidden animate-slide-up max-h-[85dvh] flex flex-col">
           <div className="flex items-center justify-between px-5 py-4 border-b border-navy/6 flex-shrink-0">
             <h3 className="font-heading text-base font-bold text-navy">{title}</h3>
-            <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-navy/5">
-              <X size={15} className="text-navy/50" />
+            <button onClick={onClose} aria-label="Close" className="w-8 h-8 flex items-center justify-center rounded-full bg-navy/5">
+              <X size={15} className="text-navy/60" aria-hidden="true" />
             </button>
           </div>
           <div className="overflow-y-auto flex-1 px-5 py-5 hide-scrollbar">
@@ -663,7 +666,7 @@ export default function SettingsPage() {
                     <Plus size={16} className="text-gold" />
                   </button>
                 </div>
-                <p className="text-navy/30 text-xs mt-1.5">{lifeAreas.length}/10 areas</p>
+                <p className="text-navy/50 text-xs mt-1.5">{lifeAreas.length}/10 areas</p>
               </div>
             )}
             {lifeAreas.length >= 10 && (
@@ -861,7 +864,7 @@ export default function SettingsPage() {
             <Crown size={16} />
             Start 7-day free trial
           </button>
-          <p className="text-navy/30 text-xs text-center mt-3">
+          <p className="text-navy/50 text-xs text-center mt-3">
             Cancel anytime. No charge until trial ends.
           </p>
         </Modal>

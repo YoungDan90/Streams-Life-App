@@ -17,7 +17,7 @@ export default function BottomNav() {
   const pathname = usePathname()
 
   return (
-    <nav className="fixed bottom-0 inset-x-0 z-50 bg-navy border-t border-white/5 pb-safe">
+    <nav aria-label="Main navigation" className="fixed bottom-0 inset-x-0 z-50 bg-navy border-t border-white/5 pb-safe">
       <div className="flex items-center justify-around px-1 pt-2 pb-1">
         {NAV_ITEMS.map(({ href, icon: Icon, label }) => {
           const active = pathname === href || pathname.startsWith(href + '/')
@@ -25,14 +25,16 @@ export default function BottomNav() {
             <Link
               key={href}
               href={href}
-              className={`flex flex-col items-center gap-0.5 px-1.5 py-1 rounded-xl transition-all ${
-                active ? 'text-gold' : 'text-white/35 hover:text-white/60'
+              aria-label={label}
+              aria-current={active ? 'page' : undefined}
+              className={`flex flex-col items-center gap-0.5 px-1.5 py-1 rounded-xl transition-all min-w-[44px] min-h-[44px] justify-center ${
+                active ? 'text-gold' : 'text-white/50 hover:text-white/70'
               }`}
             >
               <Icon
                 size={20}
                 strokeWidth={active ? 2.5 : 1.8}
-                className={active ? 'text-gold' : ''}
+                aria-hidden="true"
               />
               <span className={`text-[9px] font-medium leading-tight ${active ? 'text-gold' : ''}`}>
                 {label}

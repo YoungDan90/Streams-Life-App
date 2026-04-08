@@ -175,7 +175,9 @@ export default function CheckInPage() {
           What is one thing you want to focus on today?
         </p>
 
+        <label htmlFor="focus-input" className="sr-only">Today&apos;s focus intention</label>
         <textarea
+          id="focus-input"
           autoFocus
           value={focusText}
           onChange={e => setFocusText(e.target.value)}
@@ -223,14 +225,16 @@ export default function CheckInPage() {
                   <button
                     key={score}
                     onClick={() => setScore(area.name, score)}
+                    aria-label={`${area.name}: score ${score}`}
+                    aria-pressed={selected}
                     className={`flex-1 py-2.5 rounded-xl text-lg transition-all active:scale-95 border ${
                       selected
                         ? 'bg-navy border-navy shadow-md'
                         : 'bg-navy/5 border-navy/10 hover:border-navy/30'
                     }`}
                   >
-                    <span className="block text-center">{SCORE_EMOJIS[score]}</span>
-                    <span className={`block text-center text-[10px] font-medium mt-0.5 ${selected ? 'text-gold' : 'text-navy/40'}`}>
+                    <span className="block text-center" aria-hidden="true">{SCORE_EMOJIS[score]}</span>
+                    <span className={`block text-center text-[10px] font-medium mt-0.5 ${selected ? 'text-gold' : 'text-navy/50'}`}>
                       {score}
                     </span>
                   </button>

@@ -248,9 +248,10 @@ export default function CoachPage() {
               <h2 className="font-heading text-base font-bold text-navy">Conversations</h2>
               <button
                 onClick={() => setShowHistory(false)}
+                aria-label="Close conversation history"
                 className="w-8 h-8 flex items-center justify-center rounded-xl bg-navy/5"
               >
-                <X size={16} className="text-navy/50" />
+                <X size={16} className="text-navy/50" aria-hidden="true" />
               </button>
             </div>
 
@@ -361,7 +362,7 @@ export default function CoachPage() {
                     className="w-full text-left px-4 py-3 rounded-xl bg-navy/5 text-navy text-sm hover:bg-navy/10 transition-colors border border-navy/8 active:scale-95 flex items-center justify-between group"
                   >
                     <span>{starter}</span>
-                    <ChevronRight size={14} className="text-navy/25 group-hover:text-navy/50 flex-shrink-0" />
+                    <ChevronRight size={14} className="text-navy/50 group-hover:text-navy/50 flex-shrink-0" />
                   </button>
                 ))}
               </div>
@@ -414,7 +415,9 @@ export default function CoachPage() {
         {/* ── Input bar — always visible, always at bottom ── */}
         <div className="flex-shrink-0 border-t border-navy/8 bg-cream px-4 py-3 pb-safe">
           <div className="flex items-end gap-2">
+            <label htmlFor="coach-input" className="sr-only">Message Liv</label>
             <textarea
+              id="coach-input"
               ref={inputRef}
               value={input}
               onChange={handleInputChange}
@@ -422,19 +425,21 @@ export default function CoachPage() {
               placeholder="Message Liv…"
               rows={1}
               disabled={loading}
+              aria-label="Message Liv"
               className="flex-1 border border-navy/15 text-navy rounded-2xl px-4 py-3 focus:outline-none focus:border-gold transition-colors placeholder:text-navy/30 resize-none text-sm leading-relaxed disabled:opacity-60 bg-white"
               style={{ height: 'auto', minHeight: '44px', maxHeight: '120px' }}
             />
             <button
               onClick={() => sendMessage(input)}
               disabled={!input.trim() || loading}
+              aria-label="Send message"
               className="w-11 h-11 bg-navy rounded-xl flex items-center justify-center flex-shrink-0 active:scale-95 transition-all disabled:opacity-35 mb-0"
             >
-              <Send size={17} className="text-gold" />
+              <Send size={17} className="text-gold" aria-hidden="true" />
             </button>
           </div>
           {messages.length > 0 && (
-            <p className="text-navy/25 text-[10px] text-center mt-2">
+            <p className="text-navy/50 text-[10px] text-center mt-2">
               Press Enter to send · Shift+Enter for new line
             </p>
           )}

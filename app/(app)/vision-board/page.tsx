@@ -160,17 +160,27 @@ export default function VisionBoardPage() {
   })
 
   function MasonryCard({ item }: { item: VisionItem }) {
+    const label = item.type === 'image'
+      ? 'Vision board image — tap to view full screen'
+      : item.type === 'quote'
+      ? `Quote: ${item.content ?? ''}`
+      : `Goal: ${item.content ?? ''}`
+
     return (
       <button
         onClick={() => setFullscreen(item)}
+        aria-label={label}
         className="w-full text-left mb-3 rounded-2xl overflow-hidden active:scale-95 transition-all duration-200 shadow-lg"
       >
         {item.type === 'image' && item.image_url ? (
+          // eslint-disable-next-line @next/next/no-img-element
           <img
             src={item.image_url}
             alt="Vision board image"
             className="w-full object-cover rounded-2xl"
             loading="lazy"
+            width={300}
+            height={200}
           />
         ) : item.type === 'quote' ? (
           <div className="bg-navy-50 border border-gold/15 rounded-2xl p-4 min-h-[100px] flex flex-col justify-between">
@@ -198,15 +208,16 @@ export default function VisionBoardPage() {
       <div className="px-5 pt-12 pb-4 flex items-center justify-between">
         <div>
           <h1 className="font-heading text-2xl font-bold text-white">Vision Board</h1>
-          <p className="text-white/40 text-xs mt-0.5">
+          <p className="text-white/65 text-xs mt-0.5">
             {items.length} {items.length === 1 ? 'item' : 'items'}
           </p>
         </div>
         <button
           onClick={() => setAddStep('choose')}
+          aria-label="Add item to vision board"
           className="w-11 h-11 bg-gold rounded-full flex items-center justify-center shadow-gold active:scale-95 transition-all"
         >
-          <Plus size={22} className="text-navy" />
+          <Plus size={22} className="text-navy" aria-hidden="true" />
         </button>
       </div>
 
@@ -223,7 +234,7 @@ export default function VisionBoardPage() {
           <h2 className="font-heading text-xl font-bold text-white mb-2">
             Your vision starts here
           </h2>
-          <p className="text-white/40 text-sm leading-relaxed mb-8 max-w-xs">
+          <p className="text-white/70 text-sm leading-relaxed mb-8 max-w-xs">
             Add images, quotes, and goal statements that represent the life you&apos;re building.
           </p>
           <button
@@ -261,9 +272,10 @@ export default function VisionBoardPage() {
           <div className="flex items-center gap-3 px-5 pt-12 pb-5 border-b border-white/8">
             <button
               onClick={closeAdd}
+              aria-label="Go back"
               className="w-9 h-9 flex items-center justify-center rounded-xl bg-white/5"
             >
-              <ArrowLeft size={18} className="text-white/60" />
+              <ArrowLeft size={18} className="text-white/60" aria-hidden="true" />
             </button>
             <h2 className="font-heading text-lg font-bold text-white">
               {addStep === 'choose' ? 'Add to Vision Board'
@@ -277,7 +289,7 @@ export default function VisionBoardPage() {
             {/* Choose type */}
             {addStep === 'choose' && (
               <div className="space-y-3 animate-slide-up">
-                <p className="text-white/40 text-sm mb-5">
+                <p className="text-white/65 text-sm mb-5">
                   What do you want to add to your vision board?
                 </p>
                 {(Object.entries(TYPE_CONFIG) as [ItemType, typeof TYPE_CONFIG[ItemType]][]).map(([type, cfg]) => (
@@ -296,7 +308,7 @@ export default function VisionBoardPage() {
                     <div className="flex-shrink-0">{cfg.icon}</div>
                     <div className="text-left">
                       <p className="font-semibold text-white">{cfg.label}</p>
-                      <p className="text-white/40 text-xs mt-0.5">
+                      <p className="text-white/65 text-xs mt-0.5">
                         {type === 'image'  && 'Choose from your camera roll'}
                         {type === 'quote'  && 'A line that moves or inspires you'}
                         {type === 'goal'   && 'A bold statement of what you will achieve'}
@@ -310,7 +322,7 @@ export default function VisionBoardPage() {
             {/* Quote input */}
             {addStep === 'quote' && (
               <div className="flex flex-col h-full animate-slide-up">
-                <p className="text-white/40 text-sm mb-5">
+                <p className="text-white/65 text-sm mb-5">
                   Type a quote, lyric, or line that inspires you.
                 </p>
                 <div className="relative flex-1 mb-6">
@@ -337,7 +349,7 @@ export default function VisionBoardPage() {
             {/* Goal statement input */}
             {addStep === 'goal' && (
               <div className="flex flex-col h-full animate-slide-up">
-                <p className="text-white/40 text-sm mb-5">
+                <p className="text-white/65 text-sm mb-5">
                   Write it as if it&apos;s already true — bold, present tense, personal.
                 </p>
                 <div className="mb-2">
@@ -386,24 +398,27 @@ export default function VisionBoardPage() {
           <div className="absolute top-0 inset-x-0 z-10 flex items-center justify-between px-5 pt-12 pb-4 bg-gradient-to-b from-black/80 to-transparent">
             <button
               onClick={() => { setFullscreen(null); setDeleteConfirm(null) }}
+              aria-label="Close fullscreen view"
               className="w-10 h-10 bg-white/10 backdrop-blur rounded-full flex items-center justify-center"
             >
-              <X size={18} className="text-white" />
+              <X size={18} className="text-white" aria-hidden="true" />
             </button>
             <button
               onClick={() => setDeleteConfirm(fullscreen.id)}
+              aria-label="Delete this item"
               className="w-10 h-10 bg-white/10 backdrop-blur rounded-full flex items-center justify-center"
             >
-              <Trash2 size={16} className="text-red-400" />
+              <Trash2 size={16} className="text-red-400" aria-hidden="true" />
             </button>
           </div>
 
           {/* Content */}
           <div className="flex-1 flex items-center justify-center p-6">
             {fullscreen.type === 'image' && fullscreen.image_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={fullscreen.image_url}
-                alt="Vision board"
+                alt="Vision board image — full view"
                 className="max-w-full max-h-full object-contain rounded-2xl"
               />
             ) : fullscreen.type === 'quote' ? (
@@ -435,7 +450,7 @@ export default function VisionBoardPage() {
           {deleteConfirm === fullscreen.id && (
             <div className="absolute inset-x-5 bottom-24 bg-navy border border-white/10 rounded-2xl p-5 shadow-xl animate-slide-up">
               <p className="text-white font-semibold mb-1">Remove this item?</p>
-              <p className="text-white/40 text-sm mb-4">This cannot be undone.</p>
+              <p className="text-white/65 text-sm mb-4">This cannot be undone.</p>
               <div className="flex gap-3">
                 <button
                   onClick={() => setDeleteConfirm(null)}

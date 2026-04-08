@@ -490,11 +490,13 @@ export default function PlannerPage() {
                           <input
                             value={action}
                             onChange={e => updateAction(wi, ai, e.target.value)}
+                            aria-label={`Week ${week.week} action ${ai + 1}`}
                             className="flex-1 text-sm text-navy border border-navy/10 rounded-lg px-3 py-2 focus:outline-none focus:border-gold"
                           />
                           <button
                             onClick={() => removeAction(wi, ai)}
-                            className="text-navy/30 hover:text-red-400 transition-colors"
+                            aria-label="Remove action"
+                            className="text-navy/50 hover:text-red-400 transition-colors"
                           >
                             ×
                           </button>

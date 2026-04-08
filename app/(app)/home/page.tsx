@@ -87,8 +87,8 @@ export default async function HomePage() {
             {getGreeting(profile?.first_name || 'there')}
           </h1>
         </div>
-        <Link href="/settings" className="w-9 h-9 rounded-xl bg-navy/5 flex items-center justify-center active:scale-95 transition-all mt-1">
-          <Settings size={18} className="text-navy/50" />
+        <Link href="/settings" aria-label="Settings" className="w-9 h-9 rounded-xl bg-navy/5 flex items-center justify-center active:scale-95 transition-all mt-1">
+          <Settings size={18} className="text-navy/50" aria-hidden="true" />
         </Link>
       </div>
 
@@ -220,10 +220,10 @@ export default async function HomePage() {
               <Sparkles size={20} className="text-gold" />
               <div>
                 <p className="text-white font-semibold text-sm">Vision Board</p>
-                <p className="text-white/40 text-xs">Your future</p>
+                <p className="text-white/65 text-xs">Your future</p>
               </div>
             </div>
-            <ChevronRight size={16} className="text-white/30" />
+            <ChevronRight size={16} className="text-white/50" aria-hidden="true" />
           </div>
         </Link>
 
@@ -238,7 +238,7 @@ export default async function HomePage() {
                 <p className="text-navy/50 text-xs">See your check-ins, focus & goals</p>
               </div>
             </div>
-            <ChevronRight size={16} className="text-navy/30" />
+            <ChevronRight size={16} className="text-navy/50" aria-hidden="true" />
           </div>
         </Link>
       </div>

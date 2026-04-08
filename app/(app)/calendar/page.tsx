@@ -427,7 +427,7 @@ export default function CalendarPage() {
                         <div>
                           <p className="text-white/80 text-sm font-medium">{s.task_name}</p>
                           {s.life_area_name && (
-                            <p className="text-white/35 text-xs mt-0.5">{s.life_area_name}</p>
+                            <p className="text-white/65 text-xs mt-0.5">{s.life_area_name}</p>
                           )}
                         </div>
                         <div className="text-right flex-shrink-0 ml-3">
@@ -468,7 +468,7 @@ export default function CalendarPage() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className={`text-sm leading-relaxed ${
-                            a.completed ? 'line-through text-white/35' : 'text-white/80'
+                            a.completed ? 'line-through text-white/65' : 'text-white/80'
                           }`}>
                             {a.action_text}
                           </p>
