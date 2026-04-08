@@ -15,6 +15,12 @@ CREATE TABLE IF NOT EXISTS profiles (
   big_why TEXT,
   notification_time TEXT,
   onboarding_complete BOOLEAN DEFAULT FALSE,
+  subscription_plan TEXT NOT NULL DEFAULT 'free' CHECK (subscription_plan IN ('free', 'pro')),
+  notify_checkin BOOLEAN NOT NULL DEFAULT TRUE,
+  notify_weekly BOOLEAN NOT NULL DEFAULT TRUE,
+  notify_goals BOOLEAN NOT NULL DEFAULT TRUE,
+  appearance_mode TEXT NOT NULL DEFAULT 'light' CHECK (appearance_mode IN ('light', 'dark')),
+  text_size TEXT NOT NULL DEFAULT 'medium' CHECK (text_size IN ('small', 'medium', 'large')),
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -203,6 +209,48 @@ CREATE POLICY "Users can manage own vision board items"
   WITH CHECK (auth.uid() = user_id);
 
 CREATE INDEX IF NOT EXISTS vision_board_user_idx ON vision_board_items(user_id, created_at DESC);
+
+-- ============================================================
+-- FEEDBACK
+-- ============================================================
+CREATE TABLE IF NOT EXISTS feedback (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  message TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE feedback ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can insert own feedback"
+  ON feedback FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+-- ============================================================
+-- MIGRATION: Add new profile columns to existing installs
+-- (Safe to run on a fresh install too — IF NOT EXISTS handles it)
+-- ============================================================
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='profiles' AND column_name='subscription_plan') THEN
+    ALTER TABLE profiles ADD COLUMN subscription_plan TEXT NOT NULL DEFAULT 'free' CHECK (subscription_plan IN ('free', 'pro'));
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='profiles' AND column_name='notify_checkin') THEN
+    ALTER TABLE profiles ADD COLUMN notify_checkin BOOLEAN NOT NULL DEFAULT TRUE;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='profiles' AND column_name='notify_weekly') THEN
+    ALTER TABLE profiles ADD COLUMN notify_weekly BOOLEAN NOT NULL DEFAULT TRUE;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='profiles' AND column_name='notify_goals') THEN
+    ALTER TABLE profiles ADD COLUMN notify_goals BOOLEAN NOT NULL DEFAULT TRUE;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='profiles' AND column_name='appearance_mode') THEN
+    ALTER TABLE profiles ADD COLUMN appearance_mode TEXT NOT NULL DEFAULT 'light' CHECK (appearance_mode IN ('light', 'dark'));
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='profiles' AND column_name='text_size') THEN
+    ALTER TABLE profiles ADD COLUMN text_size TEXT NOT NULL DEFAULT 'medium' CHECK (text_size IN ('small', 'medium', 'large'));
+  END IF;
+END $$;
 
 -- ============================================================
 -- DATA RETENTION (optional scheduled job via pg_cron)

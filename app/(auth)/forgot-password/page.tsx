@@ -7,24 +7,18 @@ import { createClient } from '@/lib/supabase/client'
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('')
   const [sent, setSent] = useState(false)
-  const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
   async function handleReset(e: React.FormEvent) {
     e.preventDefault()
-    setError('')
     setLoading(true)
 
     const supabase = createClient()
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    // Always show the sent screen regardless of whether the email exists —
+    // this prevents timing/response-based email enumeration attacks.
+    await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/reset-password`,
     })
-
-    if (error) {
-      setError(error.message)
-      setLoading(false)
-      return
-    }
 
     setSent(true)
     setLoading(false)
@@ -40,7 +34,7 @@ export default function ForgotPasswordPage() {
         </div>
         <h2 className="text-white text-xl font-semibold mb-2">Check your email</h2>
         <p className="text-white/60 text-sm mb-6">
-          We&apos;ve sent a reset link to <strong className="text-gold">{email}</strong>
+          If <strong className="text-gold">{email}</strong> is registered, you&apos;ll receive a reset link shortly. Check your inbox and spam folder.
         </p>
         <Link href="/login" className="text-gold text-sm font-medium hover:text-gold-light">
           ← Back to sign in
@@ -68,12 +62,6 @@ export default function ForgotPasswordPage() {
             placeholder="you@example.com"
           />
         </div>
-
-        {error && (
-          <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-sm rounded-xl px-4 py-3">
-            {error}
-          </div>
-        )}
 
         <button
           type="submit"

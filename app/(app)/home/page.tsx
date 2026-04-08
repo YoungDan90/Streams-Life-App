@@ -3,12 +3,12 @@ import { getGreeting, formatDate, calculateStreak, averageScores, getTodayStr } 
 import Link from 'next/link'
 import ProgressRing from '@/components/ui/ProgressRing'
 import ScoreBar from '@/components/ui/ScoreBar'
-import { Zap, TrendingUp, ChevronRight, Flame, Sparkles, CalendarDays } from 'lucide-react'
+import { Zap, TrendingUp, ChevronRight, Flame, Sparkles, CalendarDays, Settings } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
 export default async function HomePage() {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
 
@@ -80,12 +80,30 @@ export default async function HomePage() {
   return (
     <div className="px-5 pt-12 pb-8 animate-fade-in">
       {/* Header */}
-      <div className="mb-6">
-        <p className="text-navy/50 text-sm">{formatDate(new Date())}</p>
-        <h1 className="font-heading text-2xl font-bold text-navy mt-1">
-          {getGreeting(profile?.first_name || 'there')}
-        </h1>
+      <div className="flex items-start justify-between mb-6">
+        <div>
+          <p className="text-navy/50 text-sm">{formatDate(new Date())}</p>
+          <h1 className="font-heading text-2xl font-bold text-navy mt-1">
+            {getGreeting(profile?.first_name || 'there')}
+          </h1>
+        </div>
+        <Link href="/settings" className="w-9 h-9 rounded-xl bg-navy/5 flex items-center justify-center active:scale-95 transition-all mt-1">
+          <Settings size={18} className="text-navy/50" />
+        </Link>
       </div>
+
+      {/* Free trial banner */}
+      {profile?.subscription_plan === 'free' && (
+        <Link href="/settings" className="block mb-5">
+          <div className="bg-gold/10 border border-gold/30 rounded-card px-4 py-3 flex items-center justify-between">
+            <div>
+              <p className="text-navy font-semibold text-sm">Unlock Streams Pro</p>
+              <p className="text-navy/60 text-xs mt-0.5">Unlimited coaching, advanced insights & more</p>
+            </div>
+            <span className="text-gold text-xs font-semibold whitespace-nowrap ml-3">Upgrade →</span>
+          </div>
+        </Link>
+      )}
 
       {/* Streak + Focus stats */}
       <div className="grid grid-cols-2 gap-3 mb-5">

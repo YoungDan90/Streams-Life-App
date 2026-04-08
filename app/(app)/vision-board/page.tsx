@@ -76,13 +76,33 @@ export default function VisionBoardPage() {
   async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
+
+    const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/heic']
+    const MAX_SIZE_BYTES = 5 * 1024 * 1024 // 5MB
+
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      alert('Only image files are supported (JPEG, PNG, WebP, GIF).')
+      if (fileInputRef.current) fileInputRef.current.value = ''
+      return
+    }
+    if (file.size > MAX_SIZE_BYTES) {
+      alert('Image must be under 5MB.')
+      if (fileInputRef.current) fileInputRef.current.value = ''
+      return
+    }
+
     setUploading(true)
 
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { setUploading(false); return }
 
-    const ext = file.name.split('.').pop() || 'jpg'
+    // Use only the MIME-derived extension, not user-supplied filename
+    const extMap: Record<string, string> = {
+      'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp',
+      'image/gif': 'gif', 'image/heic': 'heic',
+    }
+    const ext = extMap[file.type] || 'jpg'
     const path = `${user.id}/${Date.now()}.${ext}`
 
     const { error: uploadError } = await supabase.storage

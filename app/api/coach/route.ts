@@ -1,21 +1,49 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@/lib/supabase/server'
+import { rateLimit } from '@/lib/rate-limit'
 import type { ChatMessage } from '@/lib/types'
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 })
 
+const MAX_MESSAGE_LENGTH = 2000
+const MAX_HISTORY_MESSAGES = 50
+
 export async function POST(req: NextRequest) {
   try {
-    const { messages }: { messages: ChatMessage[] } = await req.json()
-
-    const supabase = createClient()
+    const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { allowed } = rateLimit(user.id)
+    if (!allowed) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please wait a moment.' },
+        { status: 429 }
+      )
+    }
+
+    const body = await req.json()
+    const messages: ChatMessage[] = body?.messages
+
+    if (!Array.isArray(messages) || messages.length === 0) {
+      return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
+    }
+
+    // Validate message history length and content
+    const trimmedMessages = messages.slice(-MAX_HISTORY_MESSAGES)
+    for (const msg of trimmedMessages) {
+      if (typeof msg.content !== 'string' || msg.content.length > MAX_MESSAGE_LENGTH) {
+        return NextResponse.json({ error: 'Message too long' }, { status: 400 })
+      }
+      if (msg.role !== 'user' && msg.role !== 'assistant') {
+        return NextResponse.json({ error: 'Invalid message role' }, { status: 400 })
+      }
     }
 
     // Fetch user context
@@ -93,7 +121,7 @@ YOUR COACHING STYLE:
 - If they mention something in their check-ins, acknowledge it specifically`
 
     // Convert messages to Anthropic format
-    const formattedMessages = messages.map(m => ({
+    const formattedMessages = trimmedMessages.map(m => ({
       role: m.role as 'user' | 'assistant',
       content: m.content,
     }))
@@ -110,7 +138,7 @@ YOUR COACHING STYLE:
 
     return NextResponse.json({ reply })
   } catch (error) {
-    console.error('Coach API error:', error)
+    console.error('Coach API error:', error instanceof Error ? error.message : 'unknown')
     return NextResponse.json(
       { error: 'Failed to get response from coach' },
       { status: 500 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@/lib/supabase/server'
+import { rateLimit } from '@/lib/rate-limit'
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -13,15 +14,39 @@ interface PlanRequest {
   weeksAvailable: number
 }
 
+const MAX_FIELD_LENGTH = 200
+
 export async function POST(req: NextRequest) {
   try {
-    const { goal, lifeArea, targetDate, weeksAvailable }: PlanRequest = await req.json()
-
-    const supabase = createClient()
+    const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { allowed } = rateLimit(user.id)
+    if (!allowed) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please wait a moment.' },
+        { status: 429 }
+      )
+    }
+
+    const body = await req.json()
+    const { goal, lifeArea, targetDate, weeksAvailable }: PlanRequest = body
+
+    if (!goal || !lifeArea || !targetDate || !weeksAvailable) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+    }
+
+    if (
+      typeof goal !== 'string' || goal.length > MAX_FIELD_LENGTH ||
+      typeof lifeArea !== 'string' || lifeArea.length > MAX_FIELD_LENGTH ||
+      typeof targetDate !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(targetDate) ||
+      typeof weeksAvailable !== 'number' || weeksAvailable < 1 || weeksAvailable > 52
+    ) {
+      return NextResponse.json({ error: 'Invalid input' }, { status: 400 })
     }
 
     // Get recent check-in context for this life area
@@ -92,7 +117,7 @@ Respond ONLY with valid JSON in this exact format:
     const parsed = JSON.parse(jsonMatch[0])
     return NextResponse.json(parsed)
   } catch (error) {
-    console.error('Planner API error:', error)
+    console.error('Planner API error:', error instanceof Error ? error.message : 'unknown')
     return NextResponse.json(
       { error: 'Failed to generate plan' },
       { status: 500 }

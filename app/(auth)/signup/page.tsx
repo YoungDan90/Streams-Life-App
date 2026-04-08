@@ -12,6 +12,7 @@ export default function SignupPage() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [sent, setSent] = useState(false)
 
   async function handleSignup(e: React.FormEvent) {
     e.preventDefault()
@@ -39,19 +40,51 @@ export default function SignupPage() {
     })
 
     if (error) {
-      setError(error.message)
+      // Never expose whether an email is already registered.
+      // Log the error code server-side (not here — this is client code),
+      // and always show the same message.
+      setError('Something went wrong. Please try again.')
       setLoading(false)
       return
     }
 
-    if (data.user) {
-      // Create profile row
-      await supabase.from('profiles').insert({
-        id: data.user.id,
-        onboarding_complete: false,
-      })
+    // Supabase may return a session immediately (email confirmation disabled)
+    // or require email verification. Handle both cases.
+    if (data.session) {
+      // Confirmed immediately — create profile and go to onboarding
+      if (data.user) {
+        await supabase.from('profiles').insert({
+          id: data.user.id,
+          onboarding_complete: false,
+        })
+      }
       router.push('/onboarding')
+    } else {
+      // Email confirmation required — show a neutral "check your email" screen
+      // regardless of whether the email already existed (prevents enumeration)
+      setSent(true)
+      setLoading(false)
     }
+  }
+
+  if (sent) {
+    return (
+      <div className="animate-fade-in text-center">
+        <div className="w-16 h-16 bg-gold/20 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg className="w-8 h-8 text-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+          </svg>
+        </div>
+        <h2 className="text-white text-xl font-semibold mb-2">Check your email</h2>
+        <p className="text-white/60 text-sm mb-6">
+          If that address isn&apos;t already registered, we&apos;ve sent a confirmation link to{' '}
+          <strong className="text-gold">{email}</strong>. Follow the link to activate your account.
+        </p>
+        <Link href="/login" className="text-gold text-sm font-medium hover:text-gold-light">
+          ← Back to sign in
+        </Link>
+      </div>
+    )
   }
 
   return (

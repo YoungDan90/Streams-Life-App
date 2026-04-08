@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@/lib/supabase/server'
+import { rateLimit } from '@/lib/rate-limit'
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -8,11 +9,19 @@ const anthropic = new Anthropic({
 
 export async function POST() {
   try {
-    const supabase = createClient()
+    const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { allowed } = rateLimit(user.id)
+    if (!allowed) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please wait a moment.' },
+        { status: 429 }
+      )
     }
 
     const sevenDaysAgo = new Date()
@@ -92,7 +101,7 @@ Keep it personal, direct, and grounded in their actual data. Do not use generic 
 
     return NextResponse.json({ summary })
   } catch (error) {
-    console.error('Weekly summary error:', error)
+    console.error('Weekly summary error:', error instanceof Error ? error.message : 'unknown')
     return NextResponse.json(
       { error: 'Failed to generate summary' },
       { status: 500 }
