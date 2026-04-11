@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { TrendingUp, TrendingDown, Minus, Share2, Flame } from 'lucide-react'
 import {
@@ -96,7 +96,7 @@ export default function WeeklyReviewPage() {
     load()
   }, [])
 
-  async function generateSummary() {
+  const generateSummary = useCallback(async () => {
     if (summary) return
     setSummaryLoading(true)
     try {
@@ -111,12 +111,11 @@ export default function WeeklyReviewPage() {
       setSummary('Unable to generate summary at this time.')
     }
     setSummaryLoading(false)
-  }
+  }, [summary])
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!loading && data.length) generateSummary()
-  }, [loading])
+  }, [loading, data.length, generateSummary])
 
   if (loading) {
     return (

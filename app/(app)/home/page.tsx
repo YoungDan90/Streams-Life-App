@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
 import { getGreeting, formatDate, calculateStreak, averageScores, getTodayStr } from '@/lib/utils'
+import type { CheckIn } from '@/lib/types'
 import Link from 'next/link'
 import ProgressRing from '@/components/ui/ProgressRing'
 import ScoreBar from '@/components/ui/ScoreBar'
@@ -10,7 +11,7 @@ export const dynamic = 'force-dynamic'
 
 export default async function HomePage() {
   let profile = null
-  let checkins: Record<string, unknown>[] = []
+  let checkins: CheckIn[] = []
   let goals: Record<string, unknown>[] = []
   let sessions: { duration_minutes: number }[] = []
   let todayCheckin = null

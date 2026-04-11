@@ -46,23 +46,7 @@ export default function LockInPage() {
     loadAreas()
   }, [])
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const tick = useCallback(() => {
-    const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000)
-    const remaining = initialDurationRef.current - elapsed
-    if (remaining <= 0) {
-      setTimeLeft(0)
-      setElapsedMinutes(Math.round(initialDurationRef.current / 60))
-      setTimerState('done')
-      setShowConfetti(true)
-      if (intervalRef.current) clearInterval(intervalRef.current)
-      logSession()
-    } else {
-      setTimeLeft(remaining)
-    }
-  }, [])
-
-  async function logSession(actualElapsedSecs?: number) {
+  const logSession = useCallback(async (actualElapsedSecs?: number) => {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
@@ -76,7 +60,22 @@ export default function LockInPage() {
       duration_minutes: durationMins,
       completed_at: new Date().toISOString(),
     })
-  }
+  }, [taskName, selectedArea])
+
+  const tick = useCallback(() => {
+    const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000)
+    const remaining = initialDurationRef.current - elapsed
+    if (remaining <= 0) {
+      setTimeLeft(0)
+      setElapsedMinutes(Math.round(initialDurationRef.current / 60))
+      setTimerState('done')
+      setShowConfetti(true)
+      if (intervalRef.current) clearInterval(intervalRef.current)
+      logSession()
+    } else {
+      setTimeLeft(remaining)
+    }
+  }, [logSession])
 
   function startTimer() {
     const mins = useCustom ? parseInt(customDuration) || 25 : duration
