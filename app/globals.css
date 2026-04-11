@@ -40,10 +40,11 @@ body {
 .hide-scrollbar::-webkit-scrollbar { display: none; }
 .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-/* Dark mode */
+/* Dark mode — CSS variable overrides. Tailwind dark: variants handle component-level styles. */
 .dark {
   --background: #0D1B2A;
   --foreground: #F8F7F4;
+  color-scheme: dark;
 }
 
 @layer utilities {
@@ -64,7 +65,7 @@ body {
   }
 
   .card {
-    @apply bg-white rounded-card shadow-card p-4;
+    @apply bg-white dark:bg-navy-50 rounded-card shadow-card p-4;
   }
 
   .card-dark {

@@ -253,6 +253,68 @@ BEGIN
 END $$;
 
 -- ============================================================
+-- VISION BOARD STORAGE BUCKET (private)
+-- ============================================================
+-- Creates the vision-board-images storage bucket if it does not exist.
+-- Images are stored at path: userId/timestamp.ext
+-- The app stores only the PATH in image_url, uses createSignedUrls() to display.
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES (
+  'vision-board-images', 'vision-board-images', false, 5242880,
+  ARRAY['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/heic']
+)
+ON CONFLICT (id) DO NOTHING;
+
+-- Storage RLS policies (create only if they don't already exist)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE tablename = 'objects' AND schemaname = 'storage'
+      AND policyname = 'Users can upload own vision board images'
+  ) THEN
+    EXECUTE $policy$
+      CREATE POLICY "Users can upload own vision board images"
+        ON storage.objects FOR INSERT TO authenticated
+        WITH CHECK (
+          bucket_id = 'vision-board-images'
+          AND (storage.foldername(name))[1] = auth.uid()::text
+        )
+    $policy$;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE tablename = 'objects' AND schemaname = 'storage'
+      AND policyname = 'Users can read own vision board images'
+  ) THEN
+    EXECUTE $policy$
+      CREATE POLICY "Users can read own vision board images"
+        ON storage.objects FOR SELECT TO authenticated
+        USING (
+          bucket_id = 'vision-board-images'
+          AND (storage.foldername(name))[1] = auth.uid()::text
+        )
+    $policy$;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE tablename = 'objects' AND schemaname = 'storage'
+      AND policyname = 'Users can delete own vision board images'
+  ) THEN
+    EXECUTE $policy$
+      CREATE POLICY "Users can delete own vision board images"
+        ON storage.objects FOR DELETE TO authenticated
+        USING (
+          bucket_id = 'vision-board-images'
+          AND (storage.foldername(name))[1] = auth.uid()::text
+        )
+    $policy$;
+  END IF;
+END $$;
+
+-- ============================================================
 -- DATA RETENTION (optional scheduled job via pg_cron)
 -- ============================================================
 -- To enable 12-month checkin retention and 30-day conversation

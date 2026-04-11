@@ -295,7 +295,7 @@ export default function OnboardingPage() {
             <p className="text-white/30 text-xs mt-4 mb-4">
               {goalsEntered > 0
                 ? `${goalsEntered} of ${getAllAreas().length} goals set — you can always add more later.`
-                : 'Skip any area you&apos;re not ready to set a goal for yet.'}
+                : "Skip any area you're not ready to set a goal for yet."}
             </p>
 
             <button

@@ -13,12 +13,16 @@ export default function ForgotPasswordPage() {
     e.preventDefault()
     setLoading(true)
 
-    const supabase = createClient()
-    // Always show the sent screen regardless of whether the email exists —
-    // this prevents timing/response-based email enumeration attacks.
-    await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
-    })
+    try {
+      const supabase = createClient()
+      // Always show the sent screen regardless of whether the email exists —
+      // this prevents timing/response-based email enumeration attacks.
+      await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      })
+    } catch {
+      // Intentionally swallow errors — we never reveal whether an email is registered
+    }
 
     setSent(true)
     setLoading(false)

@@ -49,7 +49,6 @@ export default function ResetPasswordPage() {
             value={password}
             onChange={e => setPassword(e.target.value)}
             required
-            minLength={8}
             className="w-full bg-navy-50 border border-gold/20 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-gold transition-colors placeholder:text-white/30"
             placeholder="Minimum 8 characters"
           />

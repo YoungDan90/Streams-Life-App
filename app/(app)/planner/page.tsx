@@ -61,7 +61,13 @@ export default function PlannerPage() {
       supabase.from('life_areas').select('*').eq('user_id', user.id),
     ])
 
-    setGoals((goalsRes.data || []) as Goal[])
+    // Supabase returns joined actions as 'goal_actions' but our Goal type uses 'actions'
+    // Map here so all downstream code can use goal.actions consistently
+    const mappedGoals = (goalsRes.data || []).map((g: Record<string, unknown>) => ({
+      ...g,
+      actions: (g.goal_actions as GoalAction[]) || [],
+    })) as Goal[]
+    setGoals(mappedGoals)
     setLifeAreas(areasRes.data || [])
     setLoading(false)
   }
@@ -152,11 +158,12 @@ export default function PlannerPage() {
 
   async function saveGoal() {
     setSavingGoal(true)
+    setPlanError('')
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
+    if (!user) { setSavingGoal(false); return }
 
-    const { data: goal } = await supabase
+    const { data: goal, error: goalError } = await supabase
       .from('goals')
       .insert({
         user_id: user.id,
@@ -168,19 +175,36 @@ export default function PlannerPage() {
       .select()
       .single()
 
-    if (goal) {
+    if (goalError || !goal) {
+      setPlanError('Failed to save goal. Please try again.')
+      setSavingGoal(false)
+      return
+    }
+
+    if (generatedPlan.length > 0) {
       const startWeek = currentWeek
-      const actionRows = generatedPlan.flatMap(week =>
-        week.actions.map(text => ({
+      // Calculate due_date for each week's actions so they appear in the calendar
+      const actionRows = generatedPlan.flatMap(week => {
+        const weekOffset = week.week - 1
+        const dueDate = new Date()
+        dueDate.setDate(dueDate.getDate() + weekOffset * 7 + 6) // end of that week
+        const dueDateStr = dueDate.toISOString().split('T')[0]
+        return week.actions.map(text => ({
           goal_id: goal.id,
-          week_number: startWeek + week.week - 1,
+          week_number: startWeek + weekOffset,
           action_text: text,
           completed: false,
-          due_date: null,
+          due_date: dueDateStr,
         }))
-      )
+      })
 
-      await supabase.from('goal_actions').insert(actionRows)
+      const { error: actionsError } = await supabase.from('goal_actions').insert(actionRows)
+      if (actionsError) {
+        setPlanError('Goal saved but actions failed to save. You can add them manually.')
+        setSavingGoal(false)
+        await loadData()
+        return
+      }
     }
 
     setNewGoalText('')

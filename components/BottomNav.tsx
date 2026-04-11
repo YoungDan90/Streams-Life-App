@@ -27,7 +27,8 @@ export default function BottomNav() {
               href={href}
               aria-label={label}
               aria-current={active ? 'page' : undefined}
-              className={`flex flex-col items-center gap-0.5 px-1.5 py-1 rounded-xl transition-all min-w-[44px] min-h-[44px] justify-center ${
+              style={{ minWidth: 44, minHeight: 44 }}
+              className={`flex flex-col items-center gap-0.5 px-1.5 py-1 rounded-xl transition-all justify-center ${
                 active ? 'text-gold' : 'text-white/50 hover:text-white/70'
               }`}
             >

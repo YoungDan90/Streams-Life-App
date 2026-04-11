@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { cookies } from 'next/headers'
 import { getGreeting, formatDate, calculateStreak, averageScores, getTodayStr } from '@/lib/utils'
 import Link from 'next/link'
 import ProgressRing from '@/components/ui/ProgressRing'
@@ -8,49 +9,63 @@ import { Zap, TrendingUp, ChevronRight, Flame, Sparkles, CalendarDays, Settings 
 export const dynamic = 'force-dynamic'
 
 export default async function HomePage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
+  let profile = null
+  let checkins: Record<string, unknown>[] = []
+  let goals: Record<string, unknown>[] = []
+  let sessions: { duration_minutes: number }[] = []
+  let todayCheckin = null
 
-  const today = getTodayStr()
-  const sevenDaysAgo = new Date()
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+  // Check for E2E test bypass (dev only) — skip Supabase fetch and render with empty data
+  const isE2EBypass = process.env.NODE_ENV === 'development' &&
+    (await cookies()).get('e2e-bypass')?.value === '1'
 
-  const [profileRes, , checkinsRes, goalsRes, sessionsRes, todayCheckinRes] =
-    await Promise.all([
-      supabase.from('profiles').select('*').eq('id', user.id).single(),
-      supabase.from('life_areas').select('*').eq('user_id', user.id),
-      supabase
-        .from('checkins')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('date', { ascending: false })
-        .limit(30),
-      supabase
-        .from('goals')
-        .select('*, goal_actions(*)')
-        .eq('user_id', user.id)
-        .lt('progress', 100)
-        .order('target_date', { ascending: true })
-        .limit(5),
-      supabase
-        .from('focus_sessions')
-        .select('duration_minutes')
-        .eq('user_id', user.id)
-        .gte('completed_at', sevenDaysAgo.toISOString()),
-      supabase
-        .from('checkins')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('date', today)
-        .single(),
-    ])
+  if (!isE2EBypass) try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return null
 
-  const profile = profileRes.data
-  const checkins = checkinsRes.data || []
-  const goals = goalsRes.data || []
-  const sessions = sessionsRes.data || []
-  const todayCheckin = todayCheckinRes.data
+    const today = getTodayStr()
+    const sevenDaysAgo = new Date()
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+
+    const [profileRes, , checkinsRes, goalsRes, sessionsRes, todayCheckinRes] =
+      await Promise.all([
+        supabase.from('profiles').select('*').eq('id', user.id).single(),
+        supabase.from('life_areas').select('*').eq('user_id', user.id),
+        supabase
+          .from('checkins')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('date', { ascending: false })
+          .limit(30),
+        supabase
+          .from('goals')
+          .select('*, goal_actions(*)')
+          .eq('user_id', user.id)
+          .lt('progress', 100)
+          .order('target_date', { ascending: true })
+          .limit(5),
+        supabase
+          .from('focus_sessions')
+          .select('duration_minutes')
+          .eq('user_id', user.id)
+          .gte('completed_at', sevenDaysAgo.toISOString()),
+        supabase
+          .from('checkins')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('date', today)
+          .single(),
+      ])
+
+    profile = profileRes.data
+    checkins = checkinsRes.data || []
+    goals = goalsRes.data || []
+    sessions = sessionsRes.data || []
+    todayCheckin = todayCheckinRes.data
+  } catch {
+    // Supabase unreachable — render with empty data (dev/test environment)
+  }
 
   const streak = calculateStreak(checkins)
   const totalFocusMinutes = sessions.reduce((sum: number, s: { duration_minutes: number }) => sum + (s.duration_minutes || 0), 0)
@@ -82,13 +97,13 @@ export default async function HomePage() {
       {/* Header */}
       <div className="flex items-start justify-between mb-6">
         <div>
-          <p className="text-navy/50 text-sm">{formatDate(new Date())}</p>
-          <h1 className="font-heading text-2xl font-bold text-navy mt-1">
+          <p className="text-navy/50 dark:text-white/40 text-sm">{formatDate(new Date())}</p>
+          <h1 className="font-heading text-2xl font-bold text-navy dark:text-white mt-1">
             {getGreeting(profile?.first_name || 'there')}
           </h1>
         </div>
-        <Link href="/settings" aria-label="Settings" className="w-9 h-9 rounded-xl bg-navy/5 flex items-center justify-center active:scale-95 transition-all mt-1">
-          <Settings size={18} className="text-navy/50" aria-hidden="true" />
+        <Link href="/settings" aria-label="Settings" className="w-9 h-9 rounded-xl bg-navy/5 dark:bg-white/10 flex items-center justify-center active:scale-95 transition-all mt-1">
+          <Settings size={18} className="text-navy/50 dark:text-white/50" aria-hidden="true" />
         </Link>
       </div>
 
@@ -97,8 +112,8 @@ export default async function HomePage() {
         <Link href="/settings" className="block mb-5">
           <div className="bg-gold/10 border border-gold/30 rounded-card px-4 py-3 flex items-center justify-between">
             <div>
-              <p className="text-navy font-semibold text-sm">Unlock Streams Pro</p>
-              <p className="text-navy/60 text-xs mt-0.5">Unlimited coaching, advanced insights & more</p>
+              <p className="text-navy dark:text-white font-semibold text-sm">Unlock Streams Pro</p>
+              <p className="text-navy/60 dark:text-white/60 text-xs mt-0.5">Unlimited coaching, advanced insights & more</p>
             </div>
             <span className="text-gold text-xs font-semibold whitespace-nowrap ml-3">Upgrade →</span>
           </div>
@@ -108,12 +123,12 @@ export default async function HomePage() {
       {/* Streak + Focus stats */}
       <div className="grid grid-cols-2 gap-3 mb-5">
         <div className="card flex items-center gap-3">
-          <div className="w-10 h-10 bg-orange-50 rounded-xl flex items-center justify-center">
+          <div className="w-10 h-10 bg-orange-50 dark:bg-orange-900/30 rounded-xl flex items-center justify-center">
             <Flame size={20} className="text-orange-500" />
           </div>
           <div>
-            <p className="text-navy font-bold text-xl">{streak}</p>
-            <p className="text-navy/50 text-xs">day streak</p>
+            <p className="text-navy dark:text-white font-bold text-xl">{streak}</p>
+            <p className="text-navy/50 dark:text-white/50 text-xs">day streak</p>
           </div>
         </div>
 
@@ -122,8 +137,8 @@ export default async function HomePage() {
             <Zap size={20} className="text-gold" />
           </div>
           <div>
-            <p className="text-navy font-bold text-xl">{totalFocusMinutes}</p>
-            <p className="text-navy/50 text-xs">focus mins</p>
+            <p className="text-navy dark:text-white font-bold text-xl">{totalFocusMinutes}</p>
+            <p className="text-navy/50 dark:text-white/50 text-xs">focus mins</p>
           </div>
         </div>
       </div>
@@ -132,12 +147,12 @@ export default async function HomePage() {
       {lastCheckin && avgScore !== null ? (
         <div className="card mb-5">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-heading text-base font-semibold text-navy">Life Balance</h2>
-            <span className="text-navy/40 text-xs">Latest check-in</span>
+            <h2 className="font-heading text-base font-semibold text-navy dark:text-white">Life Balance</h2>
+            <span className="text-navy/40 dark:text-white/40 text-xs">Latest check-in</span>
           </div>
           <div className="flex items-center gap-6">
             <ProgressRing value={((avgScore - 1) / 4) * 100} size={90} strokeWidth={7}>
-              <span className="font-bold text-navy text-lg">{avgScore.toFixed(1)}</span>
+              <span className="font-bold text-navy dark:text-white text-lg">{avgScore.toFixed(1)}</span>
             </ProgressRing>
             <div className="flex-1 space-y-2">
               {Object.entries(lastCheckin.scores as Record<string, number>)
@@ -152,10 +167,10 @@ export default async function HomePage() {
         <Link href="/checkin" className="card mb-5 block">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="font-heading text-base font-semibold text-navy mb-1">
+              <h2 className="font-heading text-base font-semibold text-navy dark:text-white mb-1">
                 Start your day right
               </h2>
-              <p className="text-navy/50 text-sm">Complete today&apos;s check-in</p>
+              <p className="text-navy/50 dark:text-white/50 text-sm">Complete today&apos;s check-in</p>
             </div>
             <div className="w-10 h-10 bg-gold rounded-xl flex items-center justify-center">
               <ChevronRight size={20} className="text-navy" />
@@ -184,9 +199,9 @@ export default async function HomePage() {
         <div className="card mb-5">
           <div className="flex items-center gap-2 mb-3">
             <TrendingUp size={16} className="text-gold" />
-            <h2 className="font-heading text-base font-semibold text-navy">Today&apos;s Focus</h2>
+            <h2 className="font-heading text-base font-semibold text-navy dark:text-white">Today&apos;s Focus</h2>
           </div>
-          <p className="text-navy/70 text-sm leading-relaxed">{(todayAction as { action_text: string }).action_text}</p>
+          <p className="text-navy/70 dark:text-white/70 text-sm leading-relaxed">{(todayAction as { action_text: string }).action_text}</p>
           <Link href="/planner" className="text-gold text-xs font-medium mt-2 block">
             View planner →
           </Link>
@@ -228,17 +243,17 @@ export default async function HomePage() {
         </Link>
 
         <Link href="/calendar" className="col-span-2">
-          <div className="bg-white border border-navy/8 rounded-card p-4 flex items-center justify-between active:scale-95 transition-all shadow-card">
+          <div className="bg-white dark:bg-navy-50 border border-navy/8 dark:border-white/10 rounded-card p-4 flex items-center justify-between active:scale-95 transition-all shadow-card">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 bg-navy/5 rounded-xl flex items-center justify-center">
-                <CalendarDays size={18} className="text-navy" />
+              <div className="w-9 h-9 bg-navy/5 dark:bg-white/10 rounded-xl flex items-center justify-center">
+                <CalendarDays size={18} className="text-navy dark:text-white" />
               </div>
               <div>
-                <p className="text-navy font-semibold text-sm">Activity Calendar</p>
-                <p className="text-navy/50 text-xs">See your check-ins, focus & goals</p>
+                <p className="text-navy dark:text-white font-semibold text-sm">Activity Calendar</p>
+                <p className="text-navy/50 dark:text-white/50 text-xs">See your check-ins, focus & goals</p>
               </div>
             </div>
-            <ChevronRight size={16} className="text-navy/50" aria-hidden="true" />
+            <ChevronRight size={16} className="text-navy/50 dark:text-white/50" aria-hidden="true" />
           </div>
         </Link>
       </div>

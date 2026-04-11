@@ -266,6 +266,16 @@ export default function SettingsPage() {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
+
+    // Delete storage images first
+    const { data: storageFiles } = await supabase.storage
+      .from('vision-board-images')
+      .list(user.id)
+    if (storageFiles && storageFiles.length > 0) {
+      const paths = storageFiles.map(f => `${user.id}/${f.name}`)
+      await supabase.storage.from('vision-board-images').remove(paths)
+    }
+
     await Promise.all([
       supabase.from('checkins').delete().eq('user_id', user.id),
       supabase.from('goals').delete().eq('user_id', user.id),

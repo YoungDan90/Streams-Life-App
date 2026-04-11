@@ -13,12 +13,12 @@ export async function POST() {
 
     // Delete user's vision board images from storage
     const { data: storageFiles } = await supabase.storage
-      .from('vision-board')
+      .from('vision-board-images')
       .list(user.id)
 
     if (storageFiles && storageFiles.length > 0) {
       const paths = storageFiles.map(f => `${user.id}/${f.name}`)
-      await supabase.storage.from('vision-board').remove(paths)
+      await supabase.storage.from('vision-board-images').remove(paths)
     }
 
     // All other data is deleted by CASCADE when auth.users row is removed.

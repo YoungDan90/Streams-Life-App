@@ -10,7 +10,7 @@ const nextConfig = {
       {
         protocol: 'https',
         hostname: '*.supabase.co',
-        pathname: '/storage/v1/object/public/**',
+        pathname: '/storage/v1/object/**',  // covers both public and signed URLs
       },
     ],
   },
@@ -18,17 +18,20 @@ const nextConfig = {
   async headers() {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 
+    const isDev = process.env.NODE_ENV === 'development'
+
     const csp = [
       "default-src 'self'",
       // Scripts: self + Next.js inline scripts (nonce-based would be ideal but
       // requires custom server; unsafe-inline is the practical trade-off for SSG)
-      "script-src 'self' 'unsafe-inline'",
+      // unsafe-eval required in dev mode for React hot reload and Next.js HMR
+      `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''}`,
       // Styles: self + inline (Tailwind injects)
       "style-src 'self' 'unsafe-inline'",
       // Fonts served by next/font from same origin — no Google Fonts needed
       "font-src 'self'",
-      // Images: self + Supabase storage + data URIs + blob (canvas, PWA icons)
-      `img-src 'self' data: blob: ${supabaseUrl}`,
+      // Images: self + Supabase storage (public URLs + signed URL CDN) + blobs
+      `img-src 'self' data: blob: ${supabaseUrl} https://*.supabase.co`,
       // API/WebSocket connections: self + Supabase
       `connect-src 'self' ${supabaseUrl} https://*.supabase.co wss://*.supabase.co`,
       // Service worker
@@ -91,7 +94,8 @@ const nextConfig = {
           },
           // Enables cross-origin isolation — required for SharedArrayBuffer & precise timers
           { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
-          { key: 'Cross-Origin-Resource-Policy', value: 'same-origin' },
+          // cross-origin allows our pages to load images from Supabase storage CDN
+          { key: 'Cross-Origin-Resource-Policy', value: 'cross-origin' },
         ],
       },
     ]

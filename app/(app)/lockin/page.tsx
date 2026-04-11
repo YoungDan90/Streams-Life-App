@@ -29,6 +29,7 @@ export default function LockInPage() {
   const [timeLeft, setTimeLeft] = useState(0)
   const [showAreaPicker, setShowAreaPicker] = useState(false)
   const [showConfetti, setShowConfetti] = useState(false)
+  const [elapsedMinutes, setElapsedMinutes] = useState(0)
 
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
   const startTimeRef = useRef<number>(0)
@@ -51,6 +52,7 @@ export default function LockInPage() {
     const remaining = initialDurationRef.current - elapsed
     if (remaining <= 0) {
       setTimeLeft(0)
+      setElapsedMinutes(Math.round(initialDurationRef.current / 60))
       setTimerState('done')
       setShowConfetti(true)
       if (intervalRef.current) clearInterval(intervalRef.current)
@@ -60,15 +62,18 @@ export default function LockInPage() {
     }
   }, [])
 
-  async function logSession() {
+  async function logSession(actualElapsedSecs?: number) {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
+    const durationMins = actualElapsedSecs !== undefined
+      ? Math.max(1, Math.round(actualElapsedSecs / 60))
+      : Math.round(initialDurationRef.current / 60)
     await supabase.from('focus_sessions').insert({
       user_id: user.id,
       task_name: taskName,
       life_area_id: selectedArea || null,
-      duration_minutes: Math.round(initialDurationRef.current / 60),
+      duration_minutes: durationMins,
       completed_at: new Date().toISOString(),
     })
   }
@@ -96,7 +101,10 @@ export default function LockInPage() {
 
   function endSession() {
     if (intervalRef.current) clearInterval(intervalRef.current)
-    logSession()
+    const elapsedSecs = Math.round((Date.now() - startTimeRef.current) / 1000)
+    const elapsedMins = Math.max(1, Math.round(elapsedSecs / 60))
+    setElapsedMinutes(elapsedMins)
+    logSession(elapsedSecs)
     setTimerState('done')
     setShowConfetti(true)
   }
@@ -107,6 +115,7 @@ export default function LockInPage() {
     setTimeLeft(0)
     setTaskName('')
     setShowConfetti(false)
+    setElapsedMinutes(0)
   }
 
   const totalSecs = initialDurationRef.current || duration * 60
@@ -240,7 +249,7 @@ export default function LockInPage() {
         </h1>
         <p className="text-white/60 text-lg mb-2">Well done.</p>
         <p className="text-gold/70 text-sm mb-10">
-          {taskName} — {useCustom ? parseInt(customDuration) : duration} min
+          {taskName} — {elapsedMinutes > 0 ? elapsedMinutes : (useCustom ? parseInt(customDuration) || 25 : duration)} min
         </p>
         <button
           onClick={resetTimer}

@@ -99,15 +99,15 @@ export default function CheckInPage() {
   if (todayDone && step !== 'done') {
     return (
       <div className="px-5 pt-12 pb-8 animate-fade-in">
-        <h1 className="font-heading text-2xl font-bold text-navy mb-2">Today&apos;s Check-In</h1>
-        <p className="text-navy/50 text-sm mb-6">Already completed today.</p>
+        <h1 className="font-heading text-2xl font-bold text-navy dark:text-white mb-2">Today&apos;s Check-In</h1>
+        <p className="text-navy/50 dark:text-white/50 text-sm mb-6">Already completed today.</p>
 
         <div className="card mb-5">
-          <p className="text-navy/50 text-xs mb-3">Your scores today</p>
+          <p className="text-navy/50 dark:text-white/50 text-xs mb-3">Your scores today</p>
           <div className="space-y-3">
             {Object.entries(scores).map(([area, score]) => (
               <div key={area} className="flex items-center justify-between">
-                <span className="text-navy text-sm">{area}</span>
+                <span className="text-navy dark:text-white text-sm">{area}</span>
                 <span className="text-lg">{SCORE_EMOJIS[score]}</span>
               </div>
             ))}
@@ -115,8 +115,8 @@ export default function CheckInPage() {
         </div>
 
         <div className="card">
-          <p className="text-navy/50 text-xs mb-2">Today&apos;s focus</p>
-          <p className="text-navy text-sm">{focusText || '—'}</p>
+          <p className="text-navy/50 dark:text-white/50 text-xs mb-2">Today&apos;s focus</p>
+          <p className="text-navy dark:text-white text-sm">{focusText || '—'}</p>
         </div>
       </div>
     )
@@ -191,10 +191,10 @@ export default function CheckInPage() {
         <div className="space-y-3">
           <button
             onClick={handleSubmit}
-            disabled={saving || !focusText.trim()}
+            disabled={saving}
             className="w-full bg-navy text-gold font-semibold py-4 rounded-xl active:scale-95 transition-all disabled:opacity-40"
           >
-            {saving ? 'Saving…' : 'Submit Check-In ✓'}
+            {saving ? 'Saving…' : focusText.trim() ? 'Submit Check-In ✓' : 'Submit without focus →'}
           </button>
           <button
             onClick={() => setStep('rate')}
@@ -209,15 +209,15 @@ export default function CheckInPage() {
 
   return (
     <div className="px-5 pt-12 pb-8 animate-fade-in">
-      <h1 className="font-heading text-2xl font-bold text-navy mb-1">Daily Check-In</h1>
-      <p className="text-navy/50 text-sm mb-6">
+      <h1 className="font-heading text-2xl font-bold text-navy dark:text-white mb-1">Daily Check-In</h1>
+      <p className="text-navy/50 dark:text-white/50 text-sm mb-6">
         How are you doing across each area of your life?
       </p>
 
       <div className="space-y-4 mb-8">
         {lifeAreas.map(area => (
           <div key={area.id} className="card">
-            <p className="text-navy font-medium text-sm mb-3">{area.name}</p>
+            <p className="text-navy dark:text-white font-medium text-sm mb-3">{area.name}</p>
             <div className="flex gap-2">
               {[1, 2, 3, 4, 5].map(score => {
                 const selected = scores[area.name] === score
